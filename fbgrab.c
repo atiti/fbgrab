@@ -7,15 +7,15 @@
  * and is based on Stephan Beyer's <fbshot@s-beyer.de> FBShot
  * (C) 2000.
  *
- * For features and differences, read the manual page. 
+ * For features and differences, read the manual page.
  *
  * This program has been checked with "splint +posixlib" without
  * warnings. Splint is available from http://www.splint.org/ .
  * Patches and enhancements of fbgrab have to fulfill this too.
  */
 
-#include <stdio.h>  
-#include <stdlib.h> 
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -56,9 +56,9 @@ static void usage(char *binary)
 static void help(char *binary)
 {
     fprintf(stderr, "fbgrab - takes screenshots using the framebuffer, v%s\n", VERSION);
-     
+
     usage(binary);
-    
+
     fprintf(stderr, "\nPossible options:\n");
 /* please keep this list alphabetical */
     fprintf(stderr, "\t-b n  \tforce use of n bits/pixel, required when reading from file\n");
@@ -81,16 +81,16 @@ static void help(char *binary)
 static void chvt(int num)
 {
     int fd;
-    
+
     if(-1 == (fd = open("/dev/console", O_RDWR)))
 	fatal_error("Cannot open /dev/console");
-    
+
     if (ioctl(fd, VT_ACTIVATE, num) != 0)
 	fatal_error("ioctl VT_ACTIVATE");
-    
+
     if (ioctl(fd, VT_WAITACTIVE, num) != 0)
 	fatal_error("ioctl VT_WAITACTIVE");
-    
+
     (void) close(fd);
 }
 
@@ -99,7 +99,7 @@ static unsigned short int change_to_vt(unsigned short int vt_num)
     int fd;
     unsigned short int old_vt;
     struct vt_stat vt_info;
-    
+
     memset(&vt_info, 0, sizeof(struct vt_stat));
 
     if(-1 == (fd=open("/dev/console", O_RDONLY)))
@@ -121,7 +121,7 @@ static void get_framebufferdata(char *device, struct fb_var_screeninfo *fb_varin
 {
     int fd;
     struct fb_fix_screeninfo fb_fixedinfo;
-    
+
     /* now open framebuffer device */
     if(-1 == (fd=open(device, O_RDONLY)))
     {
@@ -139,29 +139,29 @@ static void get_framebufferdata(char *device, struct fb_var_screeninfo *fb_varin
     {
         fprintf(stderr, "frame buffer fixed info:\n");
         fprintf(stderr, "id: \"%s\"\n", fb_fixedinfo.id);
-    	switch (fb_fixedinfo.type) 
-    	{
-    	case FB_TYPE_PACKED_PIXELS:
+	switch (fb_fixedinfo.type)
+	{
+	case FB_TYPE_PACKED_PIXELS:
 		fprintf(stderr, "type: packed pixels\n");
 		break;
-    	case FB_TYPE_PLANES:
+	case FB_TYPE_PLANES:
 		fprintf(stderr, "type: non interleaved planes\n");
 		break;
-    	case FB_TYPE_INTERLEAVED_PLANES:
+	case FB_TYPE_INTERLEAVED_PLANES:
 		fprintf(stderr, "type: interleaved planes\n");
 		break;
-    	case FB_TYPE_TEXT:
+	case FB_TYPE_TEXT:
 		fprintf(stderr, "type: text/attributes\n");
-		break;	
-    	case FB_TYPE_VGA_PLANES:
+		break;
+	case FB_TYPE_VGA_PLANES:
 		fprintf(stderr, "type: EGA/VGA planes\n");
 		break;
     	default:
 		fprintf(stderr, "type: undefined!\n");
 		break;
-    	}
+	}
         fprintf(stderr, "line length: %i bytes (%i pixels)\n", fb_fixedinfo.line_length, fb_fixedinfo.line_length/(fb_varinfo_p->bits_per_pixel/8));
-    
+
         fprintf(stderr, "\nframe buffer variable info:\n");
         fprintf(stderr, "resolution: %ix%i\n", fb_varinfo_p->xres, fb_varinfo_p->yres);
         fprintf(stderr, "virtual resolution: %ix%i\n", fb_varinfo_p->xres_virtual, fb_varinfo_p->yres_virtual);
@@ -189,7 +189,7 @@ static void get_framebufferdata(char *device, struct fb_var_screeninfo *fb_varin
 
 static void read_framebuffer(char *device, size_t bytes, unsigned char *buf_p, int skip_bytes)
 {
-    int fd; 
+    int fd;
 
     if(-1 == (fd=open(device, O_RDONLY)))
     {
@@ -201,12 +201,12 @@ static void read_framebuffer(char *device, size_t bytes, unsigned char *buf_p, i
         lseek(fd, skip_bytes, SEEK_SET);
     }
 
-    if (buf_p == NULL || read(fd, buf_p, bytes) != (ssize_t) bytes) 
+    if (buf_p == NULL || read(fd, buf_p, bytes) != (ssize_t) bytes)
 	fatal_error("Error: Not enough memory or data\n");
 }
 
-static void convert1555to32(int width, int height, 
-			    unsigned char *inbuffer, 
+static void convert1555to32(int width, int height,
+			    unsigned char *inbuffer,
 			    unsigned char *outbuffer)
 {
     unsigned int i;
@@ -216,17 +216,17 @@ static void convert1555to32(int width, int height,
 	/* BLUE  = 0 */
 	outbuffer[(i<<1)+Blue] = (inbuffer[i+1] & 0x7C) << 1;
 	/* GREEN = 1 */
-        outbuffer[(i<<1)+Green] = (((inbuffer[i+1] & 0x3) << 3) | 
+        outbuffer[(i<<1)+Green] = (((inbuffer[i+1] & 0x3) << 3) |
 			     ((inbuffer[i] & 0xE0) >> 5)) << 3;
 	/* RED   = 2 */
 	outbuffer[(i<<1)+Red] = (inbuffer[i] & 0x1f) << 3;
 	/* ALPHA = 3 */
-	outbuffer[(i<<1)+Alpha] = '\0'; 
+	outbuffer[(i<<1)+Alpha] = '\0';
     }
 }
 
-static void convert565to32(int width, int height, 
-			   unsigned char *inbuffer, 
+static void convert565to32(int width, int height,
+			   unsigned char *inbuffer,
 			   unsigned char *outbuffer)
 {
     unsigned int i;
@@ -236,17 +236,17 @@ static void convert565to32(int width, int height,
 	/* BLUE  = 0 */
 	outbuffer[(i<<1)+Blue] = (inbuffer[i] & 0x1f) << 3;
 	/* GREEN = 1 */
-        outbuffer[(i<<1)+Green] = (((inbuffer[i+1] & 0x7) << 3) | 
-			     (inbuffer[i] & 0xE0) >> 5) << 2;	
+        outbuffer[(i<<1)+Green] = (((inbuffer[i+1] & 0x7) << 3) |
+			     (inbuffer[i] & 0xE0) >> 5) << 2;
         /* RED   = 2 */
 	outbuffer[(i<<1)+Red] = (inbuffer[i+1] & 0xF8);
 	/* ALPHA = 3 */
-	outbuffer[(i<<1)+Alpha] = '\0'; 
+	outbuffer[(i<<1)+Alpha] = '\0';
     }
 }
 
-static void convert888to32(int width, int height, 
-			   unsigned char *inbuffer, 
+static void convert888to32(int width, int height,
+			   unsigned char *inbuffer,
 			   unsigned char *outbuffer)
 {
     unsigned int i;
@@ -264,8 +264,8 @@ static void convert888to32(int width, int height,
     }
 }
 
-static void convert8888to32(int width, int height, 
-			   unsigned char *inbuffer, 
+static void convert8888to32(int width, int height,
+			   unsigned char *inbuffer,
 			   unsigned char *outbuffer)
 {
     unsigned int i;
@@ -284,7 +284,7 @@ static void convert8888to32(int width, int height,
 }
 
 
-static void write_PNG(unsigned char *outbuffer, char *filename, 
+static void write_PNG(unsigned char *outbuffer, char *filename,
 				int width, int height, int interlace, int compression)
 {
     int i;
@@ -307,50 +307,50 @@ static void write_PNG(unsigned char *outbuffer, char *filename,
 
     for (i=0; i<height; i++)
 	row_pointers[i] = outbuffer + i * 4 * width;
-    
-    
-    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, 
+
+
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
 	(png_voidp) NULL, (png_error_ptr) NULL, (png_error_ptr) NULL);
-    
+
     if (!png_ptr)
 	fatal_error("Error: Couldn't create PNG write struct.");
-    
+
     info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr)
     {
 	png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
 	fatal_error("Error: Couldn't create PNG info struct.");
     }
-    
+
     png_init_io(png_ptr, outfile);
-    
+
     png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
-    
+
     bit_depth = 8;
     color_type = PNG_COLOR_TYPE_RGB_ALPHA;
     png_set_invert_alpha(png_ptr);
     png_set_bgr(png_ptr);
 
-    png_set_IHDR(png_ptr, info_ptr, width, height, 
-		 bit_depth, color_type, interlace, 
+    png_set_IHDR(png_ptr, info_ptr, width, height,
+		 bit_depth, color_type, interlace,
 		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-    
+
     png_write_info(png_ptr, info_ptr);
-    
+
     fprintf(stderr, "Now writing PNG file (compression %d)\n", compression);
-    
+
     png_write_image(png_ptr, row_pointers);
-    
+
     png_write_end(png_ptr, info_ptr);
     /* puh, done, now freeing memory... */
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    
+
     if (outfile != NULL)
 	(void) fclose(outfile);
-    /*@i2@*/ } /* tell splint to ignore false warning for not 
+    /*@i2@*/ } /* tell splint to ignore false warning for not
 		  released memory of png_ptr and info_ptr */
 
-static void convert_and_write(unsigned char *inbuffer, char *filename, 
+static void convert_and_write(unsigned char *inbuffer, char *filename,
 				int width, int height, int bits, int interlace, int compression)
 {
     size_t bufsize = (size_t) width * height * 4;
@@ -359,12 +359,12 @@ static void convert_and_write(unsigned char *inbuffer, char *filename,
 
     if (outbuffer == NULL)
 	fatal_error("Not enough memory");
-    
+
     memset(outbuffer, 0, bufsize);
 
     fprintf(stderr, "Converting image from %i\n", bits);
-    
-    switch(bits) 
+
+    switch(bits)
     {
     case 15:
 	convert1555to32(width, height, inbuffer, outbuffer);
@@ -386,7 +386,7 @@ static void convert_and_write(unsigned char *inbuffer, char *filename,
 	fprintf(stderr, "%d bits per pixel are not supported! ", bits);
 	exit(EXIT_FAILURE);
     }
-        
+
     (void) free(outbuffer);
 }
 
@@ -421,9 +421,9 @@ int main(int argc, char **argv)
 	optc=getopt(argc, argv, "f:z:w:b:h:iC:c:d:s:?v");
 	if (optc==-1)
 	    break;
-	switch (optc) 
+	switch (optc)
 	{
-/* please keep this list alphabetical */ 
+/* please keep this list alphabetical */
 	case 'b':
 	    bitdepth = atoi(optarg);
 	    break;
@@ -456,7 +456,7 @@ int main(int argc, char **argv)
 	    break;
 	case 'w':
 	    width = atoi(optarg);
-	    break;    
+	    break;
 	case 'z':
 	    png_compression = atoi(optarg);
 	    break;
@@ -464,7 +464,7 @@ int main(int argc, char **argv)
 	    usage(argv[0]);
 	}
     }
-    
+
     if ((optind==argc) || (1!=argc-optind))
     {
 	usage(argv[0]);
@@ -476,7 +476,7 @@ int main(int argc, char **argv)
 	old_vt = (int) change_to_vt((unsigned short int) vt_num);
 	if (waitbfg != 0) (void) sleep(3);
     }
-    
+
     if (strlen(infile) > 0)
     {
 	if (UNDEFINED == bitdepth || UNDEFINED == width || UNDEFINED == height)
@@ -497,13 +497,13 @@ int main(int argc, char **argv)
 	}
 
 	get_framebufferdata(device, &fb_varinfo, verbose);
-	
+
 	if (UNDEFINED == bitdepth)
 	    bitdepth = (int) fb_varinfo.bits_per_pixel;
-	
+
 	if (UNDEFINED == width)
 	    width = (int) fb_varinfo.xres;
-	
+
 	if (UNDEFINED == height)
 	    height = (int) fb_varinfo.yres;
 
@@ -513,11 +513,11 @@ int main(int argc, char **argv)
 
 	strncpy(infile, device, MAX_LEN - 1);
     }
-    
+
     buf_size = width * height * (((unsigned int) bitdepth + 7) >> 3);
 
     buf_p = malloc(buf_size);
-    
+
     if(buf_p == NULL)
 	fatal_error("Not enough memory");
 
@@ -529,7 +529,7 @@ int main(int argc, char **argv)
 	(void) change_to_vt((unsigned short int) old_vt);
 
     convert_and_write(buf_p, outfile, width, height, bitdepth, interlace, png_compression);
-   
+
     (void) free(buf_p);
 
     return 0;
